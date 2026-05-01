@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LCS Tool — Longest Common Subsequence Analyzer</title>
+  <meta name="description" content="Visualize the Longest Common Subsequence algorithm with interactive DP matrix and similarity detection.">
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- Background -->
+<div id="bgParticles" class="bg-particles" aria-hidden="true"></div>
+
+<!-- Header -->
+<header class="header">
+  <div class="header-inner">
+    <div class="logo">
+      <div class="logo-icon">⟨/⟩</div>
+      <div class="logo-text">LCS<span class="logo-accent">Tool</span></div>
+    </div>
+
+    <nav class="nav-pills">
+      <button class="nav-pill active" data-tab="compare">Compare</button>
+      <button class="nav-pill" data-tab="matrix">DP Matrix</button>
+      <button class="nav-pill" data-tab="about">About</button>
+    </nav>
+
+    <div class="header-badge">
+      <span class="badge-dot"></span>
+      String DP
+    </div>
+  </div>
+</header>
+
+<main class="main">
+
+  <!-- ================= COMPARE ================= -->
+  <section id="tab-compare" class="tab-panel active">
+    <div class="hero">
+      <h1 class="hero-title">Longest Common <span class="gradient-text">Subsequence</span></h1>
+      <p class="hero-sub">Analyze text similarity and visualize LCS using dynamic programming.</p>
+    </div>
+
+    <div class="input-grid">
+      <!-- Text A -->
+      <div class="input-card">
+        <div class="card-header">
+          <div class="card-label"><span class="card-dot dot-a"></span>Text A</div>
+          <div class="card-actions">
+            <button class="btn-icon" onclick="loadSample('A')">Sample</button>
+            <button class="btn-icon" onclick="clearInput('A')">Clear</button>
+          </div>
+        </div>
+        <textarea id="inputA" class="text-area" placeholder="Enter first text..."></textarea>
+        <div class="card-footer">
+          <span id="countA" class="char-count">0 chars</span>
+          <label class="file-label">
+            📄 Load file <input type="file" accept=".txt" onchange="loadFile(event,'A')">
+          </label>
+        </div>
+      </div>
+
+      <div class="divider-col">
+        <div class="vs-circle">VS</div>
+        <div class="divider-line"></div>
+      </div>
+
+      <!-- Text B -->
+      <div class="input-card">
+        <div class="card-header">
+          <div class="card-label"><span class="card-dot dot-b"></span>Text B</div>
+          <div class="card-actions">
+            <button class="btn-icon" onclick="loadSample('B')">Sample</button>
+            <button class="btn-icon" onclick="clearInput('B')">Clear</button>
+          </div>
+        </div>
+        <textarea id="inputB" class="text-area" placeholder="Enter second text..."></textarea>
+        <div class="card-footer">
+          <span id="countB" class="char-count">0 chars</span>
+          <label class="file-label">
+            📄 Load file <input type="file" accept=".txt" onchange="loadFile(event,'B')">
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div class="options-row">
+      <label class="toggle-label">
+        <input type="checkbox" id="optCaseSensitive">
+        <div class="toggle-switch"></div>
+        Case sensitive
+      </label>
+      <label class="toggle-label">
+        <input type="checkbox" id="optWordMode">
+        <div class="toggle-switch"></div>
+        Word mode
+      </label>
+      <button class="btn-analyze" onclick="analyze()">
+        <span class="btn-icon-left">⚡</span> Analyze Texts
+      </button>
+    </div>
+
+    <!-- Results Section -->
+    <div id="resultsSection" class="results-section" style="display: none;">
+      <div class="stats-bar">
+        <div class="stat-card highlight">
+          <div id="statLcsLen" class="stat-value">0</div>
+          <div class="stat-label">LCS Length</div>
+        </div>
+        <div class="stat-card">
+          <div id="statSimilarity" class="stat-value">0%</div>
+          <div class="stat-label">Similarity</div>
+        </div>
+        <div class="stat-card">
+          <div id="statTokensA" class="stat-value">0</div>
+          <div class="stat-label">Tokens A</div>
+        </div>
+        <div class="stat-card">
+          <div id="statTokensB" class="stat-value">0</div>
+          <div class="stat-label">Tokens B</div>
+        </div>
+        <div class="stat-card">
+          <div id="statTime" class="stat-value">0ms</div>
+          <div class="stat-label">Time</div>
+        </div>
+      </div>
+
+      <div class="meter-wrap">
+        <div class="meter-label">
+          <span>Similarity Score</span>
+          <span id="meterPct">0%</span>
+        </div>
+        <div class="meter-track">
+          <div id="meterFill" class="meter-fill"></div>
+        </div>
+        <div class="meter-legend">
+          <span>Low</span>
+          <span>Moderate</span>
+          <span>Identical</span>
+        </div>
+      </div>
+
+      <div class="lcs-display">
+        <div class="section-title">✨ Common Subsequence</div>
+        <div id="lcsTokens" class="lcs-tokens"></div>
+      </div>
+
+      <div class="highlight-grid">
+        <div class="highlight-card">
+          <div class="section-title">Text A Visualization</div>
+          <div id="highlightA" class="highlight-body"></div>
+        </div>
+        <div class="highlight-card">
+          <div class="section-title">Text B Visualization</div>
+          <div id="highlightB" class="highlight-body"></div>
+        </div>
+      </div>
+
+      <div class="matrix-cta">
+        <button class="btn-secondary" onclick="switchTab('matrix')">Explore DP Matrix →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= MATRIX ================= -->
+  <section id="tab-matrix" class="tab-panel">
+    <div class="hero">
+      <h1 class="hero-title">DP <span class="gradient-text">Matrix</span></h1>
+      <p class="hero-sub">Visual representation of LCS computation.</p>
+    </div>
+
+    <div class="matrix-controls">
+      <button class="btn-icon-lg" onclick="animateMatrix()">▶ Animate</button>
+      <button class="btn-icon-lg" onclick="resetMatrixAnim()">↺ Reset</button>
+      <label class="toggle-label">
+        <input type="checkbox" id="showPath" checked onchange="renderMatrix()">
+        <div class="toggle-switch"></div>
+        Show Path
+      </label>
+      <label class="toggle-label">
+        <input type="checkbox" id="showArrows" checked onchange="renderMatrix()">
+        <div class="toggle-switch"></div>
+        Arrows
+      </label>
+    </div>
+
+    <div class="matrix-legend">
+      <div class="legend-item"><span class="leg-box leg-path"></span> Path</div>
+      <div class="legend-item"><span class="leg-box leg-match"></span> Match</div>
+      <div class="legend-item"><span class="leg-box leg-base"></span> Base Case</div>
+    </div>
+
+    <div class="matrix-outer">
+      <div id="matrixPlaceholder" class="matrix-placeholder">
+        <div class="placeholder-icon">📊</div>
+        <p>No analysis found. Go to the <strong>Compare</strong> tab and run an analysis to view the computation matrix.</p>
+      </div>
+      <div id="matrixScroll" class="matrix-scroll" style="display: none;">
+        <table id="dpTable" class="dp-table"></table>
+      </div>
+    </div>
+
+    <div id="matrixInfo" class="matrix-info" style="display: none;">
+      <div class="info-card">
+        <div class="info-title">Recurrence Relation</div>
+        <div class="info-code">
+          if (A[i] == B[j])<br>
+          &nbsp;&nbsp;dp[i][j] = dp[i-1][j-1] + 1<br>
+          else<br>
+          &nbsp;&nbsp;dp[i][j] = max(dp[i-1][j], dp[i][j-1])
+        </div>
+      </div>
+      <div class="info-card">
+        <div class="info-title">Complexity</div>
+        <div class="info-code">
+          Time: O(M × N)<br>
+          Space: O(M × N)
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= ABOUT ================= -->
+  <section id="tab-about" class="tab-panel">
+    <div class="hero">
+      <h1 class="hero-title">About <span class="gradient-text">LCS</span></h1>
+      <p class="hero-sub">The core algorithm behind diff tools and plagiarism detection.</p>
+    </div>
+
+    <div class="about-grid">
+      <div class="about-card">
+        <div class="about-icon">🧠</div>
+        <h3>What is LCS?</h3>
+        <p>The Longest Common Subsequence is the longest sequence that can be derived from two input strings by deleting zero or more characters without changing the order.</p>
+      </div>
+      <div class="about-card">
+        <div class="about-icon">⚙️</div>
+        <h3>Dynamic Programming</h3>
+        <p>The algorithm uses a 2D matrix to store solutions to subproblems. This ensures that we only compute each state once, resulting in <code>O(M×N)</code> efficiency.</p>
+      </div>
+      <div class="about-card">
+        <div class="about-icon">🚀</div>
+        <h3>Applications</h3>
+        <p>Used in <code>git diff</code>, bioinformatics for DNA sequence alignment, and data compression algorithms like GZIP.</p>
+      </div>
+    </div>
+
+    <div class="complexity-table-wrap">
+      <div class="section-title">Efficiency Comparison</div>
+      <table class="complexity-table">
+        <thead>
+          <tr>
+            <th>Algorithm</th>
+            <th>Best Case</th>
+            <th>Worst Case</th>
+            <th>Space</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="highlight-row">
+            <td>Standard DP (This tool)</td>
+            <td><code>O(M×N)</code></td>
+            <td><code>O(M×N)</code></td>
+            <td><code>O(M×N)</code></td>
+          </tr>
+          <tr>
+            <td>Hirschberg's Algorithm</td>
+            <td><code>O(M×N)</code></td>
+            <td><code>O(M×N)</code></td>
+            <td><code>O(min(M,N))</code></td>
+          </tr>
+          <tr>
+            <td>Myers Diff Algorithm</td>
+            <td><code>O(N)</code></td>
+            <td><code>O(N × D)</code></td>
+            <td><code>O(D)</code></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+</main>
+
+<footer class="footer">
+  <p>© 2026 LCSTool · Advanced Algorithm Visualizer</p>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>
